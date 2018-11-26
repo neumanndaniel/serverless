@@ -66,7 +66,7 @@ namespace aksCniCalc
                     else
                     {
                         DateTime utcDateReturnFailure = DateTime.UtcNow;
-                        Console.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Pod number is higher than the supported limit of 110 pods per node.");
+                        Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Pod number is higher than the supported limit of 110 pods per node.");
                         log.LogError("Pod number is higher than the supported limit of 110 per node.");
                         return new BadRequestObjectResult("Pod number is higher than the supported limit of 110 per node.");
                     }
@@ -74,7 +74,7 @@ namespace aksCniCalc
                 else
                 {
                     DateTime utcDateReturnFailure = DateTime.UtcNow;
-                    Console.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Node number is higher than the supported limit of 100 nodes per cluster.");
+                    Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Node number is higher than the supported limit of 100 nodes per cluster.");
                     log.LogError("Node number is higher than the supported limit of 100 nodes per cluster.");
                     return new BadRequestObjectResult("Node number is higher than the supported limit of 100 nodes per cluster.");
                 }
@@ -82,7 +82,7 @@ namespace aksCniCalc
             else
             {
                 DateTime utcDateReturnFailure = DateTime.UtcNow;
-                Console.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Processed input was null or did not match the required input type.");
+                Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Processed input was null or did not match the required input type.");
                 log.LogError("Processed input was null or did not match the required input type.");
                 return new BadRequestObjectResult("Please pass 'nodes' on the query string or in the request body at least with a number greater than 0.");
             }
