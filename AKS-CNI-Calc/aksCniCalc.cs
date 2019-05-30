@@ -47,10 +47,14 @@ namespace aksCniCalc
 
             if (nodes != null && nodes != "0")
             {
-                if (node + nodescale <= 100)
+                if (node + nodescale <= 400)
                 {
-                    if (pod <= 110)
+                    if (pod <= 250)
                     {
+                        if (pod < 30)
+                        {
+                            pod = 30;
+                        }
                         ipaddresses = ((node + 1 + nodescale) + ((node + 1 + nodescale) * pod) + ilb);
                         output.nodes = node;
                         output.pods = pod;
@@ -66,17 +70,17 @@ namespace aksCniCalc
                     else
                     {
                         DateTime utcDateReturnFailure = DateTime.UtcNow;
-                        Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Pod number is higher than the supported limit of 110 pods per node.");
-                        log.LogError("Pod number is higher than the supported limit of 110 per node.");
-                        return new BadRequestObjectResult("Pod number is higher than the supported limit of 110 per node.");
+                        Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Pod number is higher than the supported limit of 250 pods per node.");
+                        log.LogError("Pod number is higher than the supported limit of 250 per node.");
+                        return new BadRequestObjectResult("Pod number is higher than the supported limit of 250 per node.");
                     }
                 }
                 else
                 {
                     DateTime utcDateReturnFailure = DateTime.UtcNow;
-                    Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Node number is higher than the supported limit of 100 nodes per cluster.");
-                    log.LogError("Node number is higher than the supported limit of 100 nodes per cluster.");
-                    return new BadRequestObjectResult("Node number is higher than the supported limit of 100 nodes per cluster.");
+                    Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Node number is higher than the supported limit of 400 nodes per cluster.");
+                    log.LogError("Node number is higher than the supported limit of 400 nodes per cluster.");
+                    return new BadRequestObjectResult("Node number is higher than the supported limit of 400 nodes per cluster.");
                 }
             }
             else
