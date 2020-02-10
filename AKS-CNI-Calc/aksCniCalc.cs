@@ -23,73 +23,53 @@ namespace aksCniCalc
             DateTime utcDateStart = DateTime.UtcNow;
             Console.WriteLine($"{utcDateStart.ToString()} [INF]: C# HTTP trigger function processed a request.");
 
-            string nodes = req.Query["nodes"];
-            string pods = req.Query["pods"];
-            string scale = req.Query["scale"];
-            string ilbs = req.Query["ilbs"];
-            int node;
-            int pod;
-            int nodescale;
-            int ilb;
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+
+            int nodes = Convert.ToInt32((data?.nodes ?? req.Query["nodes"]) ?? 0);
+            int pods = Convert.ToInt32((data?.pods ?? req.Query["pods"]) ?? 30);
+            int scale = Convert.ToInt32((data?.scale ?? req.Query["scale"]) ?? 0);
+            int ilbs = Convert.ToInt32((data?.ilbs ?? req.Query["ilbs"]) ?? 0);
+
             int ipaddresses;
             dynamic output = new ExpandoObject();
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            nodes = nodes ?? data?.nodes;
-            pods = pods ?? data?.pods;
-            scale = scale ?? data?.scale;
-            ilbs = ilbs ?? data?.ilbs;
-            node = Int32.Parse(nodes ?? "0");
-            pod = Int32.Parse(pods ?? "30");
-            nodescale = Int32.Parse(scale ?? "0");
-            ilb = Int32.Parse(ilbs ?? "0");
-
-            if (nodes != null && nodes != "0")
-            {
-                if (node + nodescale <= 400)
-                {
-                    if (pod <= 250)
-                    {
-                        if (pod < 30)
-                        {
-                            pod = 30;
-                        }
-                        ipaddresses = ((node + 1 + nodescale) + ((node + 1 + nodescale) * pod) + ilb);
-                        output.nodes = node;
-                        output.pods = pod;
-                        output.scale = nodescale;
-                        output.ilbs = ilb;
-                        output.ipaddresses = ipaddresses;
-                        string result = JsonConvert.SerializeObject(output, Formatting.Indented);
-                        DateTime utcDateReturnSuccess = DateTime.UtcNow;
-                        Console.WriteLine($"{utcDateReturnSuccess.ToString()} [INF]: Processed AKS cluster CNI IP address calculation for '{node}' node(s), '{pod}' pod(s) with a scaling option of '{nodescale}' node(s) and '{ilb}' Azure Internal Load Balancer(s) successfully. Result: '{ipaddresses}' IP addresses required.");
-                        log.LogInformation($"Processed AKS cluster CNI IP address calculation for '{node}' node(s), '{pod}' pod(s) with a scaling option of '{nodescale}' node(s) and '{ilb}' Azure Internal Load Balancer(s) successfully. Result: '{ipaddresses}' IP addresses required.");
-                        return (ActionResult)new OkObjectResult(result);
-                    }
-                    else
-                    {
-                        DateTime utcDateReturnFailure = DateTime.UtcNow;
-                        Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Pod number is higher than the supported limit of 250 pods per node.");
-                        log.LogError("Pod number is higher than the supported limit of 250 per node.");
-                        return new BadRequestObjectResult("Pod number is higher than the supported limit of 250 per node.");
-                    }
-                }
-                else
-                {
-                    DateTime utcDateReturnFailure = DateTime.UtcNow;
-                    Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Node number is higher than the supported limit of 400 nodes per cluster.");
-                    log.LogError("Node number is higher than the supported limit of 400 nodes per cluster.");
-                    return new BadRequestObjectResult("Node number is higher than the supported limit of 400 nodes per cluster.");
-                }
-            }
-            else
+            if (nodes == 0)
             {
                 DateTime utcDateReturnFailure = DateTime.UtcNow;
                 Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Processed input was null or did not match the required input type.");
                 log.LogError("Processed input was null or did not match the required input type.");
                 return new BadRequestObjectResult("Please pass 'nodes' on the query string or in the request body at least with a number greater than 0.");
             }
+            if (nodes + scale > 1000)
+            {
+                DateTime utcDateReturnFailure = DateTime.UtcNow;
+                Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Node number is higher than the supported limit of 1000 nodes per cluster.");
+                log.LogError("Node number is higher than the supported limit of 1000 nodes per cluster.");
+                return new BadRequestObjectResult("Node number is higher than the supported limit of 1000 nodes per cluster.");
+            }
+            if (pods > 250)
+            {
+                DateTime utcDateReturnFailure = DateTime.UtcNow;
+                Console.Error.WriteLine($"{utcDateReturnFailure.ToString()} [ERR]: Pod number is higher than the supported limit of 250 pods per node.");
+                log.LogError("Pod number is higher than the supported limit of 250 per node.");
+                return new BadRequestObjectResult("Pod number is higher than the supported limit of 250 per node.");
+            }
+            if (pods < 30)
+            {
+                pods = 30;
+            }
+            ipaddresses = ((nodes + 1 + scale) + ((nodes + 1 + scale) * pods) + ilbs);
+            output.nodes = nodes;
+            output.pods = pods;
+            output.scale = scale;
+            output.ilbs = ilbs;
+            output.ipaddresses = ipaddresses;
+            string result = JsonConvert.SerializeObject(output, Formatting.Indented);
+            DateTime utcDateReturnSuccess = DateTime.UtcNow;
+            Console.WriteLine($"{utcDateReturnSuccess.ToString()} [INF]: Processed AKS cluster CNI IP address calculation for '{nodes}' node(s), '{pods}' pod(s) with a scaling option of '{scale}' node(s) and '{ilbs}' Azure Internal Load Balancer(s) successfully. Result: '{ipaddresses}' IP addresses required.");
+            log.LogInformation($"Processed AKS cluster CNI IP address calculation for '{nodes}' node(s), '{pods}' pod(s) with a scaling option of '{scale}' node(s) and '{ilbs}' Azure Internal Load Balancer(s) successfully. Result: '{ipaddresses}' IP addresses required.");
+            return (ActionResult)new OkObjectResult(result);
         }
     }
 }
